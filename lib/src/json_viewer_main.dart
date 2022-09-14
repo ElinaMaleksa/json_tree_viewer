@@ -16,7 +16,9 @@ class JsonTreeViewer extends StatefulWidget {
       this.stringValueStyle,
       this.numberValueStyle,
       this.trueValueStyle,
-      this.falseValueStyle})
+      this.falseValueStyle,
+      this.scrollable,
+      this.nodeWidth})
       : assert(data is Map || data is Iterable),
         super(key: key);
 
@@ -29,6 +31,9 @@ class JsonTreeViewer extends StatefulWidget {
   final TextStyle? trueValueStyle;
   final TextStyle? falseValueStyle;
   final TextStyle? numberValueStyle;
+
+  final bool? scrollable;
+  final double? nodeWidth;
 
   @override
   _JsonTreeViewerState createState() => _JsonTreeViewerState();
@@ -53,6 +58,8 @@ class _JsonTreeViewerState extends State<JsonTreeViewer> {
   Widget build(BuildContext context) {
     return FlexibleTreeView<JsonElement>(
         nodes: _jsonNodes,
+        scrollable: widget.scrollable ?? true,
+        nodeWidth: widget.nodeWidth ?? 300,
         nodeItemBuilder: (context, node) {
           return _nodeWidget(context, node);
         });
@@ -79,11 +86,8 @@ class _JsonTreeViewerState extends State<JsonTreeViewer> {
           if (jsonNode.parent?.data.type == JsonType.array)
             Text(
               '${jsonNode.parent!.children.indexOf(jsonNode)}: ',
-              style: TextStyle(
-                  fontSize: 12,
-                  color: jsonElement.selected
-                      ? Theme.of(context).colorScheme.secondary
-                      : null),
+              style:
+                  TextStyle(fontSize: 12, color: jsonElement.selected ? Theme.of(context).colorScheme.secondary : null),
             ),
           if (jsonElement.key != null)
             ConstrainedBox(
@@ -112,8 +116,7 @@ class _JsonTreeViewerState extends State<JsonTreeViewer> {
                 color: Colors.grey,
               ),
             ),
-          if (jsonElement.type == JsonType.array ||
-              jsonElement.type == JsonType.object)
+          if (jsonElement.type == JsonType.array || jsonElement.type == JsonType.object)
             Text(
               '${jsonElement.type == JsonType.array ? 'Array' : jsonElement.type == JsonType.object ? 'Object' : ''} [${jsonElement.value.length}]',
               style: widget.defaultValueStyle ??
@@ -124,34 +127,22 @@ class _JsonTreeViewerState extends State<JsonTreeViewer> {
           if (!jsonNode.expanded)
             Expanded(
               child: Tooltip(
-                message: jsonElement.type == JsonType.string &&
-                        jsonElement.toString().length > 16
+                message: jsonElement.type == JsonType.string && jsonElement.toString().length > 16
                     ? jsonElement.toString()
                     : '',
                 child: SelectableText(
                   ' ${jsonElement.toString()}',
                   maxLines: 1,
                   style: jsonElement.type == JsonType.string
-                      ? (widget.stringValueStyle ??
-                          TextStyle(fontSize: 12, color: Colors.brown.shade200))
-                      : (jsonElement.type == JsonType.double ||
-                              jsonElement.type == JsonType.int)
-                          ? (widget.numberValueStyle ??
-                              TextStyle(
-                                  fontSize: 12, color: Colors.green.shade600))
+                      ? (widget.stringValueStyle ?? TextStyle(fontSize: 12, color: Colors.brown.shade200))
+                      : (jsonElement.type == JsonType.double || jsonElement.type == JsonType.int)
+                          ? (widget.numberValueStyle ?? TextStyle(fontSize: 12, color: Colors.green.shade600))
                           : jsonElement.type == JsonType.boolean
                               ? (jsonElement.value == true
-                                  ? (widget.trueValueStyle ??
-                                      TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.blue.shade600))
-                                  : (widget.falseValueStyle ??
-                                      const TextStyle(
-                                          fontSize: 12, color: Colors.red)))
-                              : (jsonElement.type == JsonType.array ||
-                                      jsonElement.type == JsonType.object)
-                                  ? const TextStyle(
-                                      fontSize: 12, color: Colors.grey)
+                                  ? (widget.trueValueStyle ?? TextStyle(fontSize: 12, color: Colors.blue.shade600))
+                                  : (widget.falseValueStyle ?? const TextStyle(fontSize: 12, color: Colors.red)))
+                              : (jsonElement.type == JsonType.array || jsonElement.type == JsonType.object)
+                                  ? const TextStyle(fontSize: 12, color: Colors.grey)
                                   : (widget.defaultValueStyle ??
                                       const TextStyle(
                                         fontSize: 12,
@@ -170,9 +161,7 @@ class _JsonTreeViewerState extends State<JsonTreeViewer> {
       var mapData = widget.data as Map;
       var json = JsonElement(value: mapData, type: JsonType.object);
       var rootNode = TreeNode<JsonElement>(
-          data: json,
-          expanded: widget.expandedAll,
-          children: _buildChildrenNodes(mapData.entries.toList()));
+          data: json, expanded: widget.expandedAll, children: _buildChildrenNodes(mapData.entries.toList()));
       _jsonNodes.add(rootNode);
     } else if (widget.data is Iterable) {
       var listData = widget.data as Iterable;
@@ -194,8 +183,7 @@ class _JsonTreeViewerState extends State<JsonTreeViewer> {
 
   TreeNode<JsonElement> _buildNode(dynamic ele) {
     if (ele is MapEntry) {
-      var json = JsonElement(
-          key: ele.key, value: ele.value, type: _valueType(ele.value));
+      var json = JsonElement(key: ele.key, value: ele.value, type: _valueType(ele.value));
       if (ele.value is List) {
         return TreeNode<JsonElement>(
             data: json,
@@ -214,9 +202,7 @@ class _JsonTreeViewerState extends State<JsonTreeViewer> {
 
       if (ele is List) {
         return TreeNode<JsonElement>(
-            data: json,
-            expanded: ele.isNotEmpty && widget.expandedAll,
-            children: _buildChildrenNodes(ele));
+            data: json, expanded: ele.isNotEmpty && widget.expandedAll, children: _buildChildrenNodes(ele));
       } else if (ele is Map) {
         return TreeNode<JsonElement>(
             data: json,
@@ -247,9 +233,7 @@ class _JsonTreeViewerState extends State<JsonTreeViewer> {
 }
 
 class ExpandableIcon extends StatefulWidget {
-  const ExpandableIcon(
-      {Key? key, required this.child, this.expanded, this.onExpandChanged})
-      : super(key: key);
+  const ExpandableIcon({Key? key, required this.child, this.expanded, this.onExpandChanged}) : super(key: key);
   final Widget child;
   final bool? expanded;
   final ValueChanged<bool>? onExpandChanged;
@@ -258,8 +242,7 @@ class ExpandableIcon extends StatefulWidget {
   _ExpandableIconState createState() => _ExpandableIconState();
 }
 
-class _ExpandableIconState extends State<ExpandableIcon>
-    with SingleTickerProviderStateMixin {
+class _ExpandableIconState extends State<ExpandableIcon> with SingleTickerProviderStateMixin {
   late AnimationController _rotate;
   late Animation<double> _turnAnim;
 
@@ -274,8 +257,7 @@ class _ExpandableIconState extends State<ExpandableIcon>
       vsync: this,
       duration: Duration(milliseconds: 300),
     );
-    _turnAnim = Tween<double>(begin: 0, end: 0.25)
-        .animate(CurvedAnimation(parent: _rotate, curve: Curves.easeInOut));
+    _turnAnim = Tween<double>(begin: 0, end: 0.25).animate(CurvedAnimation(parent: _rotate, curve: Curves.easeInOut));
     if (_currentExpand) {
       _rotate.forward(from: 0.5);
     }
